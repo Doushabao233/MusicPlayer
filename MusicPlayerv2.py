@@ -35,6 +35,7 @@ background = pygame.image.load(background_path)
 background = pygame.transform.scale(background, (screen.get_width(), screen.get_height()))
 SUPPORTED_FORMATS = ['mp3', 'ogg', 'wav']
 debug_font = pygame.font.SysFont('Cascadia Code', 20)
+debug_screen = False
 clock = pygame.time.Clock()
 running = True
 dt = 0
@@ -42,16 +43,17 @@ dt = 0
 
 def draw_window():
     '''Draw the screen.'''
-    text_surface = debug_font.render(
+    text_surface = debug_font.render('', antialias=True, color='white')
+    if debug_screen:
+        text_surface = debug_font.render(
 '''Music Player by Doushabao_233
 {} fps
 background: {}
 is playing? {}
 Python version {}'''.format(clock.get_fps(), background_path, pygame.mixer.music.get_busy(), sys.version),
-        antialias=True,
-        color='white'
-    )
-    
+            antialias=True,
+            color='white'
+        )
     
     screen.blit(background, pygame.Vector2(0, 0))
     screen.blit(text_surface, pygame.Vector2(10, 10))
@@ -63,7 +65,7 @@ while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     for event in pygame.event.get():
-        # print(event.dict)
+        # print(event)
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.DROPFILE:
@@ -73,8 +75,9 @@ while running:
                 pygame.mixer.music.play()
             else:
                 print('illegal file format detected', event.dict['file'].split('.')[1])
-
-    
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_F3:
+                debug_screen = not debug_screen    
     draw_window()
 
     # limits FPS to 60
