@@ -34,7 +34,7 @@ pygame.init()
 pygame.mixer.init()
 # pygame.mixer.music.load(r'C:\Users\Lenovo\Music\张雨生\口是心非 - 张雨生.mp3')
 # pygame.mixer.music.play()
-screen = pygame.display.set_mode((1280, 720))
+screen = pygame.display.set_mode((1280, 720), pygame.SCALED | pygame.RESIZABLE)
 pygame.display.set_caption('Music Player')
 background_path = get_background()
 background = pygame.image.load(background_path)
@@ -44,7 +44,7 @@ note = pygame.image.load(note_path)
 note = pygame.transform.scale(note, (64, 64))
 note_y = screen.get_height() / 2 + 25
 SUPPORTED_FORMATS = ['mp3', 'ogg', 'wav']
-debug_font = pygame.font.SysFont('Cascadia Code', 20)
+debug_font = pygame.font.SysFont('Cascadia Code', 20, bold=True)
 debug_screen = False
 clock = pygame.time.Clock()
 running = True
@@ -53,6 +53,8 @@ dt = 0
 
 def draw_window():
     '''Draw the screen.'''
+    global background
+    background = pygame.transform.scale(background, (screen.get_width(), screen.get_height()))
     text_surface = debug_font.render('', antialias=True, color='white')
     if debug_screen:
         text_surface = debug_font.render(
