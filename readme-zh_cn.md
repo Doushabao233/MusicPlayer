@@ -1,4 +1,4 @@
-### [English] | 简体中文
+### [English](/Doushabao233/MusicPlayer) | 简体中文
 
 # 一个纯粹的音乐播放器
 

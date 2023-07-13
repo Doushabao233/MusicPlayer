@@ -1,4 +1,4 @@
-### English | [简体中文]
+### English | [简体中文](/Doushabao233/MusicPlayer/blob/master/readme-zh_cn.md)
 
 # Just a music player
 
