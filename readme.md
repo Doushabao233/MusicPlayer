@@ -18,6 +18,21 @@ On July 11th, I tinkered with the PyQT Designer, but I couldn't figure it out. I
 
 On July 12th, I deleted the previously designed UI and decided to start with something simple. "A journey of a thousand miles begins with a single step." I should first focus on implementing background music playback and lyrics extraction/display features. After an hour of debugging, I managed to accomplish the display of lyrics and background music playback. In that fleeting moment of its smooth operation, I felt satisfied, yet it didn't fully meet my desired outcome. However, I'm still puzzled about the next steps... What should I use to achieve it? Tkinter, PyQT, Pygame, or HTML+CSS? Regardless of which path I choose, I have to pay the price for my initial imaginative ideas. To fulfill those aspirations, I might have to implement AAML lyric parsing, Gaussian blur effects, audio background playback, support for various formats like MP3/WAV/OGG, automatic search for artist lyrics information... As for Gaussian blur effects, I believe it would be difficult or even impossible to achieve using Tkinter or PyQT. In terms of difficulty, I am more inclined to choose Pygame, which I have a certain foundation in. Additionally, based on my knowledge, Pygame can fulfill some of the rendering requirements.
 
-On July 13th, the basic roadmap using Pygame for development has been finalized. MusicPlayer v2 is complete, or at least it has a GUI interface.
+On July 13th, the basic roadmap using Pygame for development has been finalized. MusicPlayer v2 development begins, at least with a GUI interface. Particle effects have been added during music playback.
+
+For more updates, please refer to the commit history.
+
+# Release
+
+Since the program is not yet complete, I am not considering how to package the pygame program as an executable (exe) at the moment. Therefore, there is no release for this project temporarily. If you want to experience it, you can clone the repository, install Python and the required libraries, and run it yourself.
+
+# Plans
+
+- [X] Particle effects during music playback.
+- [ ] More UI interfaces.
+- [ ] Lyrics display.
+- [ ] Gaussian blur for lyrics.
+- [ ] Window resizing (not a high priority at the moment).
+- [ ] Automatic scraping of lyrics, album covers, and other information (not a high priority at the moment).
 
 ###### Translated by ChatGPT.
