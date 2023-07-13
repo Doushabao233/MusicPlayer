@@ -23,6 +23,12 @@ def get_background():
         # NIGHT
         return './Resources/background/{}/night.png'.format(random.choice(dirs))
 
+def get_note():
+    '''This function returns a path. Like: ./Resources/particles/note_blue.png'''
+    path = './Resources/particles'
+    dirs = os.listdir(path)
+    return './Resources/particles/{}'.format(random.choices(dirs)[0])
+
 # pygame setup
 pygame.init()
 pygame.mixer.init()
@@ -33,6 +39,10 @@ pygame.display.set_caption('Music Player')
 background_path = get_background()
 background = pygame.image.load(background_path)
 background = pygame.transform.scale(background, (screen.get_width(), screen.get_height()))
+note_path = get_note()
+note = pygame.image.load(note_path)
+note = pygame.transform.scale(note, (64, 64))
+note_y = screen.get_height() / 2 + 25
 SUPPORTED_FORMATS = ['mp3', 'ogg', 'wav']
 debug_font = pygame.font.SysFont('Cascadia Code', 20)
 debug_screen = False
@@ -50,12 +60,15 @@ def draw_window():
 {} fps
 background: {}
 is playing? {}
-Python version {}'''.format(clock.get_fps(), background_path, pygame.mixer.music.get_busy(), sys.version),
+Python version {}
+note y: {}'''.format(clock.get_fps(), background_path, pygame.mixer.music.get_busy(), sys.version, note_y),
             antialias=True,
             color='white'
         )
     
     screen.blit(background, pygame.Vector2(0, 0))
+    if pygame.mixer.music.get_busy():
+        screen.blit(note, pygame.Vector2(screen.get_width() / 2 - note.get_width() / 2, note_y))
     screen.blit(text_surface, pygame.Vector2(10, 10))
     pygame.display.flip()
     pygame.display.update()
@@ -77,7 +90,18 @@ while running:
                 print('illegal file format detected', event.dict['file'].split('.')[1])
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_F3:
-                debug_screen = not debug_screen    
+                debug_screen = not debug_screen 
+
+    if pygame.mixer.music.get_busy():
+        if 350 < note_y <= 359:
+            note_y -= 0.1
+        elif note_y <= 350:   
+            note_path = get_note()
+            note = pygame.image.load(note_path)
+            note = pygame.transform.scale(note, (64, 64))
+            note_y = screen.get_height() / 2 + 30
+        else:
+            note_y -= 3
     draw_window()
 
     # limits FPS to 60
