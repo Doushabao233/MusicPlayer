@@ -68,6 +68,11 @@ def func():
             if i >= len(subs):
                 break
 
+
+
+
+
+
 if len(sys.argv) > 1:
     path = sys.argv[1]
 else:
