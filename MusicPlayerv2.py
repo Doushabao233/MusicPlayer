@@ -58,7 +58,7 @@ def get_background():
         return './Resources/backgrounds/{}/night.png'.format(random.choice(dirs))
 
 def get_note():
-    '''This function returns a path. Like: ./Resources/particles/note_blue.png'''
+    '''This function returns a path randomly. Like: ./Resources/particles/note_blue.png'''
     path = './Resources/particles'
     dirs = os.listdir(path)
     return './Resources/particles/{}'.format(random.choices(dirs)[0])
@@ -85,7 +85,6 @@ blurred_background = pygame.transform.box_blur(background, 0)
 note_path = get_note()
 note = pygame.image.load(note_path)
 note = pygame.transform.scale(note, (64, 64))
-blurred_note = pygame.transform.box_blur(note, 0)
 note_y = HEIGHT / 2 + 25
 info_background = pygame.Surface((WIDTH, HEIGHT))
 info_background.fill((0, 0, 0))
@@ -95,13 +94,16 @@ temp_album_cover.set_alpha(0)
 album_cover = pygame.Surface(temp_album_cover.get_size(), flags=pygame.SRCALPHA) # ROUNDED! NICE!
 album_cover = pygame.transform.smoothscale(album_cover, (WIDTH / 3.4, WIDTH / 3.4))
 id3: tuple   # assignment later
+music_title_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
+music_artist_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
 debug_font = pygame.font.SysFont('Cascadia Code', 25)
+bold_font = pygame.font.Font('./Resources/fonts/Bold.OTF', 30)
 debug_screen = False
 clock = pygame.time.Clock()
 running = True
 dt = 0
 background_blur_radius = 0
-
+lock = threading.Lock()
 
 def thread_it(func, *args: tuple):
     # 创建
@@ -111,20 +113,19 @@ def thread_it(func, *args: tuple):
 
 def animations():
     
-    global note_y, note_path, blurred_note, background, blurred_background, background_blur_radius
+    global note, note_y, note_path, background, blurred_background, background_blur_radius
+    
+    note_path = get_note()
+    # note = pygame.image.load(note_path)
+    note = pygame.transform.scale(note, (64, 64))
     while running:
         if not pygame.mixer.get_init():
             break
         if pygame.mixer.music.get_busy():
-            blurred_note = pygame.image.load(note_path)
-            note = pygame.image.load(note_path)
-            blurred_note = pygame.transform.scale(note, (64, 64))
-            note = pygame.transform.scale(note, (64, 64))
-            # blurred_note = pygame.transform.box_blur(note, int(background_blur_radius / 2))
-            # music note
             if round(note_y) - 0.1 <= 450:   
                 time.sleep(0.1)
                 note_path = get_note()
+                note = pygame.image.load(note_path)
                 note_y = HEIGHT / 2 + 50
             else:
                 note_y += (450 - note_y) * 0.1
@@ -148,11 +149,11 @@ def animations():
                 info_background.set_alpha(info_background.get_alpha() - 10)
 
             if album_cover.get_alpha() > 0:
-                album_cover.set_alpha(album_cover.get_alpha() - 50)             
+                album_cover.set_alpha(album_cover.get_alpha() - 50)
 
 def draw_window():
     '''Draw the screen.'''
-    global background, blurred_background, info_background, background_blur_radius, note
+    global background, blurred_background, info_background, background_blur_radius, note, music_title_text, music_artist_text
     debug_screen_text = debug_font.render('', antialias=True, color='white')
     if debug_screen:
         debug_screen_text = debug_font.render(
@@ -185,23 +186,32 @@ background blur variable: {bg_blur_var}'''.format(
         )
 
     if pygame.mixer.music.get_busy():
-        music_title = id3[0]
-        music_artist = id3[1]
-        album_name = id3[2]
-        if id3[3] is None:
-            img = Image.open('./Resources/images/unknown_album.png')
-        else:
-            img = Image.open(io.BytesIO(id3[3]))
-        temp_album_cover = pygame.image.frombytes(img.tobytes(), img.size, 'RGB').convert_alpha()
-        temp_album_cover = pygame.transform.smoothscale(temp_album_cover, (WIDTH / 3.4, WIDTH / 3.4))
+        with lock:
+            music_title = id3[0]
+            music_title_text = bold_font.render(music_title, antialias=True, color=(255, 255, 255))
+            music_artist = id3[1]
+            music_artist_text = bold_font.render(music_artist, antialias=True, color=(255, 255, 255))
+            music_artist_text.set_alpha(200)
+            album_name = id3[2]
+            if id3[3] is None:
+                img = Image.open('./Resources/icons/unknown_album.png')
+            else:
+                img = Image.open(io.BytesIO(id3[3]))
+            temp_album_cover = pygame.image.frombytes(img.tobytes(), img.size, 'RGB').convert_alpha()
+            temp_album_cover = pygame.transform.smoothscale(temp_album_cover, (WIDTH / 3.4, WIDTH / 3.4))
 
-        pygame.draw.rect(album_cover, 'white', album_cover.get_rect(), border_radius=10)
-        album_cover.blit(temp_album_cover, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+            pygame.draw.rect(album_cover, 'white', album_cover.get_rect(), border_radius=10)
+            album_cover.blit(temp_album_cover, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+        
 
     screen.blit(blurred_background, (0, 0))
-    if pygame.mixer.music.get_busy(): screen.blit(note, (WIDTH / 2 - note.get_width() / 2, note_y))
+    if pygame.mixer.music.get_busy():
+        note = pygame.transform.scale(note, (64, 64))
+        screen.blit(note, (WIDTH / 2 - note.get_width() / 2, note_y))
     screen.blit(info_background, (0, 0))
     screen.blit(album_cover, (WIDTH / 25, WIDTH / 25))
+    screen.blit(music_title_text, (WIDTH / 25, HEIGHT / 2 + 100))
+    screen.blit(music_artist_text, (WIDTH / 25, HEIGHT / 2 + 100 + 40))
     screen.blit(debug_screen_text, (10, 10))
     pygame.display.flip()
 

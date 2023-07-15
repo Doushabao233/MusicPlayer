@@ -2,6 +2,10 @@
 
 # Just a music player
 
+It's a music player based on pygame-ce. You can't run it on pygame because pygame doesn't have `box_blur()` function. -- Do `pip install pygame-ce`, and use pygame community edition now!
+
+# Why make this?
+
 For someone who simply wants to listen to music, a music player should have a pure and straightforward functionality - playing songs. It should not include features such as live streaming, social interactions, or DJ capabilities. The user interface should have a single interaction, which is to start playing music by adding music files. Subsequently, the user should only see lyrics, album cover, progress bar, and playback controls, without distractions such as comments, karaoke, or playlists.
 
 The lyrics should be displayed similar to Apple Music, where they are initially blurred and become visible when the mouse is hovered over them. The scrolling of the lyrics should be smooth, with each line seamlessly transitioning to the next, creating a fluid and unobtrusive visual experience.
