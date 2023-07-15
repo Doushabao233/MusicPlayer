@@ -68,11 +68,8 @@ def get_note():
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
 scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 
-screen_width = 1280
-screen_height = 720
-
-WIDTH = int(screen_width * scale_factor)
-HEIGHT = int(screen_height * scale_factor)
+WIDTH = int(1280 * scale_factor)
+HEIGHT = int(720 * scale_factor)
 SUPPORTED_FORMATS = ['mp3', 'ogg', 'wav']
 
 pygame.init() # Pygame，启动！
@@ -84,10 +81,11 @@ pygame.display.set_caption('Music Player')
 background_path = get_background()
 background = pygame.image.load(background_path)
 background = pygame.transform.scale(background, (WIDTH, HEIGHT))
-# background = pygame.transform.box_blur(background, 0)
+blurred_background = pygame.transform.box_blur(background, 0)
 note_path = get_note()
 note = pygame.image.load(note_path)
 note = pygame.transform.scale(note, (64, 64))
+blurred_note = pygame.transform.box_blur(note, 0)
 note_y = HEIGHT / 2 + 25
 info_background = pygame.Surface((WIDTH, HEIGHT))
 info_background.fill((0, 0, 0))
@@ -102,6 +100,7 @@ debug_screen = False
 clock = pygame.time.Clock()
 running = True
 dt = 0
+background_blur_radius = 0
 
 
 def thread_it(func, *args: tuple):
@@ -111,10 +110,17 @@ def thread_it(func, *args: tuple):
     t.start()
 
 def animations():
-    global note_y, note_path, background
-    background_blur = 0
-    while 1:
+    
+    global note_y, note_path, blurred_note, background, blurred_background, background_blur_radius
+    while running:
+        if not pygame.mixer.get_init():
+            break
         if pygame.mixer.music.get_busy():
+            blurred_note = pygame.image.load(note_path)
+            note = pygame.image.load(note_path)
+            blurred_note = pygame.transform.scale(note, (64, 64))
+            note = pygame.transform.scale(note, (64, 64))
+            # blurred_note = pygame.transform.box_blur(note, int(background_blur_radius / 2))
             # music note
             if round(note_y) - 0.1 <= 450:   
                 time.sleep(0.1)
@@ -124,19 +130,29 @@ def animations():
                 note_y += (450 - note_y) * 0.1
                 time.sleep(0.01)
             
-            # background blur
-            if background_blur < 10:
-                background_blur += 1
-                background = pygame.transform.box_blur(background, background_blur)
+            if background_blur_radius < 10:
+                background_blur_radius += 1
+                blurred_background = pygame.transform.box_blur(background, background_blur_radius)
+            
+            if info_background.get_alpha() < 200:
+                info_background.set_alpha(info_background.get_alpha() + 10)
+            
+            if album_cover.get_alpha() < 500:
+                album_cover.set_alpha(album_cover.get_alpha() + 30)
         else:
-            if background_blur > 0:
-                background_blur -= 1
-                background = pygame.transform.box_blur(background, background_blur)
+            if background_blur_radius > 0:
+                background_blur_radius -= 1
+                blurred_background = pygame.transform.box_blur(background, background_blur_radius)       
+
+            if info_background.get_alpha() > 0:
+                info_background.set_alpha(info_background.get_alpha() - 10)
+
+            if album_cover.get_alpha() > 0:
+                album_cover.set_alpha(album_cover.get_alpha() - 50)             
 
 def draw_window():
     '''Draw the screen.'''
-    global background, info_background
-    background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+    global background, blurred_background, info_background, background_blur_radius, note
     debug_screen_text = debug_font.render('', antialias=True, color='white')
     if debug_screen:
         debug_screen_text = debug_font.render(
@@ -148,27 +164,27 @@ Python version {python_ver}
 mouse: {mouse_x} {mouse_y}
 note y: {note_y}
 中文测试
-screen: {screen_width}x{screen_height}'''.format(
-            fps=clock.get_fps(),
-            bg_img=background_path,
-            is_playing=pygame.mixer.music.get_busy(),
-            python_ver=sys.version,
-            mouse_x=pygame.mouse.get_pos()[0],
-            mouse_y=pygame.mouse.get_pos()[1],
-            note_y=note_y,
-            screen_width=WIDTH,
-            screen_height=HEIGHT),
+screen: {screen_width}x{screen_height}
+info background alpha: {info_bg_alpha}
+background blur variable: {bg_blur_var}'''.format(
+                fps=round(clock.get_fps()),
+                bg_img=background_path,
+                is_playing=pygame.mixer.music.get_busy(),
+                python_ver=sys.version,
+                mouse_x=pygame.mouse.get_pos()[0],
+                mouse_y=pygame.mouse.get_pos()[1],
+                note_y=round(note_y, 4),
+                screen_width=WIDTH,
+                screen_height=HEIGHT,
+                info_bg_alpha=info_background.get_alpha(),
+                bg_blur_var=background_blur_radius,
+                ),
 
             antialias=True,
             color='white'
         )
-    
-    screen.blit(background, (0, 0))
-    if pygame.mixer.music.get_busy():
-        note = pygame.image.load(note_path)
-        note = pygame.transform.scale(note, (64, 64))
-        screen.blit(note, (WIDTH / 2 - note.get_width() / 2, note_y))
 
+    if pygame.mixer.music.get_busy():
         music_title = id3[0]
         music_artist = id3[1]
         album_name = id3[2]
@@ -178,22 +194,14 @@ screen: {screen_width}x{screen_height}'''.format(
             img = Image.open(io.BytesIO(id3[3]))
         temp_album_cover = pygame.image.frombytes(img.tobytes(), img.size, 'RGB').convert_alpha()
         temp_album_cover = pygame.transform.smoothscale(temp_album_cover, (WIDTH / 3.4, WIDTH / 3.4))
-        if info_background.get_alpha() < 200:
-            info_background.set_alpha(info_background.get_alpha() + 10)
-        if album_cover.get_alpha() < 500:
-            album_cover.set_alpha(album_cover.get_alpha() + 30)
-        
-        screen.blit(info_background, (0, 0))
+
         pygame.draw.rect(album_cover, 'white', album_cover.get_rect(), border_radius=10)
         album_cover.blit(temp_album_cover, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
-        screen.blit(album_cover, (WIDTH / 25, WIDTH / 25))
-    else:
-        if info_background.get_alpha() > 0:
-            info_background.set_alpha(info_background.get_alpha() - 10)
 
-        if album_cover.get_alpha() > 0:
-            album_cover.set_alpha(album_cover.get_alpha() - 50)
-
+    screen.blit(blurred_background, (0, 0))
+    if pygame.mixer.music.get_busy(): screen.blit(note, (WIDTH / 2 - note.get_width() / 2, note_y))
+    screen.blit(info_background, (0, 0))
+    screen.blit(album_cover, (WIDTH / 25, WIDTH / 25))
     screen.blit(debug_screen_text, (10, 10))
     pygame.display.flip()
 
@@ -203,6 +211,7 @@ while running:
         # print(event)
         if event.type == pygame.QUIT: # quit program
             running = False
+            print('quit!')
         elif event.type == pygame.DROPFILE: # catch files
             print('omg', event.dict)
             if event.dict['file'].split('.')[1] in SUPPORTED_FORMATS:
@@ -214,6 +223,12 @@ while running:
         elif event.type == pygame.KEYDOWN: # toggle debug screen
             if event.key == pygame.K_F3:
                 debug_screen = not debug_screen 
+            if event.key == pygame.K_KP_PLUS:
+                print('add')
+                info_background.set_alpha(info_background.get_alpha() + 5)
+            elif event.key == pygame.K_KP_MINUS:
+                print('111')
+                info_background.set_alpha(info_background.get_alpha() - 5)
     draw_window()
     clock.tick(60)
 
