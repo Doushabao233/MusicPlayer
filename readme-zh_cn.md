@@ -1,5 +1,7 @@
 ### [English](/readme.md) | 简体中文
 
+![](https://socialify.git.ci/Doushabao233/MusicPlayer/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Diagonal%20Stripes&theme=Auto)
+
 # 一个纯粹的音乐播放器
 
 这是一个基于pygame-ce的音乐播放器。你不能用pygamce运行，因为pygame没有`box_blur()`模糊函数。——命令行输入`pip install pygame-ce`，然后开始用pygame社区版吧！
