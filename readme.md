@@ -4,6 +4,8 @@
 
 It's a music player based on pygame-ce. You can't run it on pygame because pygame doesn't have `box_blur()` function. -- Do `pip install pygame-ce`, and use pygame community edition now!
 
+Known issue: The program can only run properly at a resolution of 1600x900, otherwise scaling issues may occur.
+
 # Why make this?
 
 For someone who simply wants to listen to music, a music player should have a pure and straightforward functionality - playing songs. It should not include features such as live streaming, social interactions, or DJ capabilities. The user interface should have a single interaction, which is to start playing music by adding music files. Subsequently, the user should only see lyrics, album cover, progress bar, and playback controls, without distractions such as comments, karaoke, or playlists.
@@ -33,7 +35,8 @@ Since the program is not yet complete, I am not considering how to package the p
 # Plans
 
 - [X] Particle effects during music playback.
-- [ ] More UI interfaces.
+- [ ] Better UI interfaces.
+- [ ] Window free-scaling.
 - [ ] Lyrics display.
 - [ ] Gaussian blur for lyrics.
 - [ ] Window resizing (not a high priority at the moment).
