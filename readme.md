@@ -1,5 +1,7 @@
 ### English | [简体中文](/readme-zh_cn.md)
 
+![](https://socialify.git.ci/Doushabao233/MusicPlayer/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Diagonal%20Stripes&theme=Auto)
+
 # Just a music player
 
 It's a music player based on pygame-ce. You can't run it on pygame because pygame doesn't have `box_blur()` function. -- Do `pip install pygame-ce`, and use pygame community edition now!
