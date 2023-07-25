@@ -77,10 +77,9 @@ SUPPORTED_FORMATS = ['mp3', 'ogg', 'wav']
 
 pygame.init() # Pygame，启动！
 pygame.mixer.init()
-# pygame.mixer.music.load(r'C:\Users\Lenovo\Music\张雨生\口是心非 - 张雨生.mp3')
-# pygame.mixer.music.play()
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption('Music Player')
+music_busy = False
 background_path = get_background()
 background = pygame.image.load(background_path)
 background = pygame.transform.scale(background, (WIDTH, HEIGHT))
@@ -102,12 +101,12 @@ music_title_text.set_alpha(0)
 music_artist_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
 music_artist_text.set_alpha(0)
 progress_bar_surface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
-progress_bar_surface.fill((0, 0, 0, 0)) # idk why add it
 progress_bar_surface.set_alpha(100)
+progress_bar_surface.set_colorkey((0, 0, 0))
 total_progress_bar_width = 0
 debug_font = pygame.font.SysFont('Cascadia Code', 25)
 bold_font = pygame.font.Font('./Resources/fonts/Bold.OTF', 30)
-debug_screen = False
+toggle_debug_screen = False
 clock = pygame.time.Clock()
 running = True
 dt = 0
@@ -130,7 +129,7 @@ def animations():
     while running:
         if not pygame.mixer.get_init():
             break
-        if pygame.mixer.music.get_busy():
+        if music_busy:
             if round(note_y) - 0.1 <= 450:   
                 time.sleep(0.1)
                 note_path = get_note()
@@ -180,11 +179,46 @@ def animations():
             # if progress_bar_surface.get_alpha() > 0:
                 # progress_bar_surface.set_alpha(progress_bar_surface.get_alpha() - 30)
 
+def process_music():
+    global music_busy, id3, music_title_text, music_title, music_artist, music_artist_text, album_name
+    while running:
+        music_busy = pygame.mixer.music.get_busy()
+        if music_busy:
+            # MUSIC ALBUM PICTURE ---------------------------------------------------------------
+            if (id3[4] is None):
+                img = Image.open('./Resources/icons/unknown_album.png')
+            else:
+                img = Image.open(io.BytesIO(id3[4]))
+            for i in ['RGB', 'RGBA', 'RGBX', 'ARGB', 'BGRA', 'P']: # this list include priority (try RGB, RGBA first)
+                try:
+                    temp_album_cover = pygame.image.frombytes(img.tobytes(), img.size, i).convert_alpha()
+                except ValueError:
+                    continue # if ValueError, which means the album image is not this format
+                else:
+                    break
+            temp_album_cover = pygame.transform.smoothscale(temp_album_cover, (WIDTH / 3.4, WIDTH / 3.4))
+
+            pygame.draw.rect(album_cover, 'white', temp_album_cover.get_rect(), border_radius=int(10 / scale_factor))
+            album_cover.blit(temp_album_cover, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+            # MUSIC INFO ------------------------------------------------------------------------
+            music_title = id3[1]
+            if music_title is None:
+                music_title = id3[0]
+            music_title_text = bold_font.render(music_title, antialias=True, color=(255, 255, 255))
+            music_artist = id3[2]
+            if music_artist is None:
+                music_artist = ''
+            music_artist_text = bold_font.render(music_artist, antialias=True, color=(255, 255, 255))
+            music_artist_text.set_alpha(200) # must be
+            album_name = id3[3]
+            
+
+
 def draw_window():
     '''Draw the screen.'''
     global background, blurred_background, info_background, background_blur_radius, note, music_title_text, music_artist_text
     debug_screen_text = debug_font.render('', antialias=True, color='white')
-    if debug_screen:
+    if toggle_debug_screen:
         debug_screen_text = debug_font.render(
 '''Music Player by Doushabao_233
 {fps} fps
@@ -203,7 +237,7 @@ total progessbar width: {total_prog_bar_width}'''.format(
                 draw_perf_sec=str(draw_window_perf)[:6],
                 draw_perf='█' * int(round(draw_window_perf, 2) * 150),
                 bg_img=background_path,
-                is_playing=pygame.mixer.music.get_busy(),
+                is_playing=music_busy,
                 python_ver=sys.version,
                 mouse_x=pygame.mouse.get_pos()[0],
                 mouse_y=pygame.mouse.get_pos()[1],
@@ -219,46 +253,19 @@ total progessbar width: {total_prog_bar_width}'''.format(
             color='white',
             bgcolor=(0, 0, 0, 100)
         )
-    if pygame.mixer.music.get_busy(): # when start a sound
-        # MUSIC INFO ------------------------------------------------------------------------
-        music_title = id3[1]
-        if music_title is None:
-                music_title = id3[0]
-        music_title_text = bold_font.render(music_title, antialias=True, color=(255, 255, 255))
-        music_artist = id3[2]
-        if music_artist is None:
-                music_artist = ''
-        music_artist_text = bold_font.render(music_artist, antialias=True, color=(255, 255, 255))
-        music_artist_text.set_alpha(200) # must be
-        album_name = id3[3]
-        # MUSIC ALBUM PICTURE ---------------------------------------------------------------
-        if id3[4] is None:
-                img = Image.open('./Resources/icons/unknown_album.png')
-        else:
-                img = Image.open(io.BytesIO(id3[4]))
-        for i in ['RGB', 'RGBA', 'RGBX', 'ARGB', 'BGRA', 'P']: # this list include priority (try RGB, RGBA first)
-                try:
-                    temp_album_cover = pygame.image.frombytes(img.tobytes(), img.size, i).convert_alpha()
-                except ValueError:
-                    continue # if ValueError, which means the album image is not this format
-                else:
-                    break
-        temp_album_cover = pygame.transform.smoothscale(temp_album_cover, (WIDTH / 3.4, WIDTH / 3.4))
-
-        pygame.draw.rect(album_cover, 'white', temp_album_cover.get_rect(), border_radius=int(10 / scale_factor))
-        album_cover.blit(temp_album_cover, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+    if music_busy: # when start a sound
         # MUSIC PROGRESS BAR ----------------------------------------------------------------
         pygame.draw.rect(progress_bar_surface, (150, 150, 150), pygame.Rect(WIDTH / 25, HEIGHT / 2 + 100 + 40 + 60, total_progress_bar_width, 10), border_radius=10)
         
         
 
     screen.blit(blurred_background, (0, 0))
-    if pygame.mixer.music.get_busy():
+    if music_busy:
         note = pygame.transform.scale(note, (64, 64))
         screen.blit(note, (WIDTH / 2 - note.get_width() / 2, note_y))
     screen.blit(info_background, (0, 0))
     screen.blit(album_cover, (WIDTH / 25, WIDTH / 25))
-    if pygame.mixer.music.get_busy():
+    if music_busy:
         screen.blit(music_title_text, (WIDTH / 25, HEIGHT / 2 + 100))
         screen.blit(music_artist_text, (WIDTH / 25, HEIGHT / 2 + 100 + 40))
         screen.blit(progress_bar_surface, (0, 0)) # just put at 0, 0
@@ -266,22 +273,21 @@ total progessbar width: {total_prog_bar_width}'''.format(
     pygame.display.flip()
 
 thread_it(animations)
+thread_it(process_music)
 while running:
     for event in pygame.event.get():
-        # print(event)
         if event.type == pygame.QUIT: # quit program
             running = False
+        elif event.type == pygame.KEYDOWN: # toggle debug screen
+            if event.key == pygame.K_F3:
+                toggle_debug_screen = not toggle_debug_screen
         elif event.type == pygame.DROPFILE: # catch files
-            progress_bar_surface.fill((0, 0, 0))
             if event.dict['file'].split('.')[-1] in SUPPORTED_FORMATS:
                 id3 = parse_file(event.dict['file'])
                 pygame.mixer.music.load(event.dict['file'])
                 pygame.mixer.music.play()
             else:
                 print('illegal file format detected:', event.dict['file'].split('.')[-1])
-        elif event.type == pygame.KEYDOWN: # toggle debug screen
-            if event.key == pygame.K_F3:
-                debug_screen = not debug_screen 
         elif event.type == pygame.WINDOWRESIZED:
             WIDTH = event.dict['x']
             HEIGHT = event.dict['y']
