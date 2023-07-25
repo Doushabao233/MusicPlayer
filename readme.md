@@ -1,6 +1,6 @@
 ### English | [简体中文](/readme-zh_cn.md)
 
-![](https://socialify.git.ci/Doushabao233/MusicPlayer/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Diagonal%20Stripes&theme=Auto)
+![](https://socialify.git.ci/Doushabao233/MusicPlayer/image?description=1&descriptionEditable=I%20want%20to%20write%20a%20music%20player.&font=Inter&language=1&name=1&owner=1&pattern=Diagonal%20Stripes&theme=Auto)
 
 # Just a music player
 
