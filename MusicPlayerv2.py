@@ -1,4 +1,3 @@
-# Example file showing a circle moving on screen
 import ctypes
 import random
 import threading
@@ -43,7 +42,7 @@ def parse_file(path):
     return os.path.basename(path), title, artist, album, picture
 
 def get_background():
-    '''This function returns a path. Like: ./Resources/backgrounds/snow/day.png'''
+    '''This function returns a path randomly. Like: ./Resources/backgrounds/snow/day.png'''
     path = './Resources/backgrounds'
     dirs = os.listdir(path)
     # 0:00 ~ 10:00 day.png
@@ -66,8 +65,7 @@ def get_note():
     dirs = os.listdir(path)
     return './Resources/particles/{}'.format(random.choices(dirs)[0])
 
-# pygame setup
-
+# let program support high-dpi resolution
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
 scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 125
 
@@ -75,46 +73,56 @@ WIDTH = int(1600 * scale_factor)
 HEIGHT = int(900 * scale_factor)
 SUPPORTED_FORMATS = ['mp3', 'ogg', 'wav']
 
-pygame.init() # Pygame，启动！
-pygame.mixer.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption('Music Player')
-music_busy = False
-background_path = get_background()
-background = pygame.image.load(background_path)
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
-blurred_background = pygame.transform.box_blur(background, 0)
-note_path = get_note()
-note = pygame.image.load(note_path)
+# pygame setup
+pygame.init() # Pygame, launch!
+pygame.mixer.init() # init pygame mixer
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE) # set screen
+pygame.display.set_caption('Music Player') # window title
+music_busy = False # True if there's music playing
+background_path = get_background() # path of background
+background = pygame.image.load(background_path) # random background
+background = pygame.transform.smoothscale(background, (WIDTH, HEIGHT))
+blurred_background = pygame.transform.box_blur(background, 0) # background but blurry, for play screen
+note_path = get_note() # path of note particle
+note = pygame.image.load(note_path) # draw particle when playing music
 note = pygame.transform.scale(note, (64, 64))
 note_y = HEIGHT / 2 + 25
-info_background = pygame.Surface((WIDTH, HEIGHT))
+info_background = pygame.Surface((WIDTH, HEIGHT)) # a transparent black hover
 info_background.fill((0, 0, 0))
 info_background.set_alpha(0)
-temp_album_cover = pygame.image.load('test.jpg').convert_alpha() # WIP
+# Music cover - step 1. temporarily load the image
+temp_album_cover = pygame.image.load('./Resources/icons/unknown_album.png').convert_alpha()
 temp_album_cover.set_alpha(0)
-album_cover = pygame.Surface(temp_album_cover.get_size(), flags=pygame.SRCALPHA) # ROUNDED! NICE!
+# Music Cover - step 2. ... then create a pygame.Surface ... (not finished)
+album_cover = pygame.Surface(temp_album_cover.get_size(), flags=pygame.SRCALPHA) #
 album_cover = pygame.transform.smoothscale(album_cover, (WIDTH / 3.4, WIDTH / 3.4))
+# the information of mp3 file
 id3: tuple   # assignment later
 music_title_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
 music_title_text.set_alpha(0)
 music_artist_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
 music_artist_text.set_alpha(0)
+# music progress bar will draw on a surface instead of screen
 progress_bar_surface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 progress_bar_surface.set_alpha(100)
 progress_bar_surface.set_colorkey((0, 0, 0))
+# width of progress bar, make it resizeable
 total_progress_bar_width = 0
+# save fonts
 debug_font = pygame.font.SysFont('Cascadia Code', 25)
 bold_font = pygame.font.Font('./Resources/fonts/Bold.OTF', 30)
+# True if open debug screen (F3)
 toggle_debug_screen = False
 clock = pygame.time.Clock()
+# False if click close button
 running = True
 dt = 0
+# for animation
 background_blur_radius = 0
-lock = threading.Lock()
+lock = threading.Lock() # thread lock
 
 def thread_it(func, *args: tuple):
-    # 创建
+    # pack functions into a thread
     t = threading.Thread(target=func, args=args) 
     t.daemon = True
     t.start()
@@ -123,14 +131,14 @@ def animations():
     
     global note, note_y, note_path, background, blurred_background, background_blur_radius, total_progress_bar_width
     
-    note_path = get_note()
+    note_path = get_note() # random note path
     # note = pygame.image.load(note_path)
     note = pygame.transform.scale(note, (64, 64))
     while running:
         if not pygame.mixer.get_init():
             break
-        if music_busy:
-            if round(note_y) - 0.1 <= 450:   
+        if music_busy: # if music playing....
+            if round(note_y) - 0.1 <= 450: # show particle
                 time.sleep(0.1)
                 note_path = get_note()
                 note = pygame.image.load(note_path)
@@ -139,41 +147,41 @@ def animations():
                 note_y += (450 - note_y) * 0.1
                 time.sleep(0.01)
             
-            if background_blur_radius < 10:
+            if background_blur_radius < 10: # blur animation
                 background_blur_radius += 1
                 blurred_background = pygame.transform.box_blur(background, background_blur_radius)
             
-            if info_background.get_alpha() < 200:
+            if info_background.get_alpha() < 200: # fade animation
                 info_background.set_alpha(info_background.get_alpha() + 10)
             
-            if album_cover.get_alpha() < 255:
+            if album_cover.get_alpha() < 255: # fade animation
                 album_cover.set_alpha(album_cover.get_alpha() + 30)
 
-            if music_title_text.get_alpha() < 255:
+            if music_title_text.get_alpha() < 255: # fade animation
                 music_title_text.set_alpha(music_title_text.get_alpha() + 1)
             
-            if music_artist_text.get_alpha() < 255:
+            if music_artist_text.get_alpha() < 255: # fade animation
                 music_artist_text.set_alpha(music_artist_text.get_alpha() + 1)
             
-            if total_progress_bar_width < album_cover.get_width():
+            if total_progress_bar_width < album_cover.get_width(): # animation
                 total_progress_bar_width += (album_cover.get_width() - total_progress_bar_width) / 5
         else:
             total_progress_bar_width = 0
 
-            if background_blur_radius > 0:
+            if background_blur_radius > 0: # blur animation
                 background_blur_radius -= 1
                 blurred_background = pygame.transform.box_blur(background, background_blur_radius)       
 
-            if info_background.get_alpha() > 0:
+            if info_background.get_alpha() > 0: # fade out animation
                 info_background.set_alpha(info_background.get_alpha() - 10)
 
-            if album_cover.get_alpha() > 0:
+            if album_cover.get_alpha() > 0: # fade out animation
                 album_cover.set_alpha(album_cover.get_alpha() - 50)
             
-            if music_title_text.get_alpha() > 0:
+            if music_title_text.get_alpha() > 0: # fade out animation
                 music_title_text.set_alpha(music_title_text.get_alpha() - 30)
 
-            if music_artist_text.get_alpha() > 0:
+            if music_artist_text.get_alpha() > 0: # fade out animation
                 music_artist_text.set_alpha(music_artist_text.get_alpha() - 30)
             
             # if progress_bar_surface.get_alpha() > 0:
@@ -270,7 +278,7 @@ total progessbar width: {total_prog_bar_width}'''.format(
         screen.blit(music_artist_text, (WIDTH / 25, HEIGHT / 2 + 100 + 40))
         screen.blit(progress_bar_surface, (0, 0)) # just put at 0, 0
     screen.blit(debug_screen_text, (10, 10))
-    pygame.display.flip()
+    pygame.display.flip() # refresh screen
 
 thread_it(animations)
 thread_it(process_music)
@@ -288,13 +296,13 @@ while running:
                 pygame.mixer.music.play()
             else:
                 print('illegal file format detected:', event.dict['file'].split('.')[-1])
-        elif event.type == pygame.WINDOWRESIZED:
+        elif event.type == pygame.WINDOWRESIZED: # WIP
             WIDTH = event.dict['x']
             HEIGHT = event.dict['y']
             screen.fill((0, 0 ,0))
             screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
             screen.fill((0, 0 ,0))
-    perf_start = time.perf_counter()
+    perf_start = time.perf_counter() # for debug
     draw_window()
     draw_window_perf = time.perf_counter() - perf_start
     clock.tick(60)
