@@ -4,7 +4,7 @@ import threading
 import os
 import sys
 import time
-import stagger
+import mutagen
 from mutagen.mp3 import MP3
 sys.stdout = open('nul', 'w')
 import pygame
@@ -26,15 +26,12 @@ def parse_file(path):
     length = 0.6
     picture = None
 
-    try:
-        audiofile = stagger.read_tag(path)
-        title = audiofile.title
-        artist = audiofile.artist
-        album = audiofile.album
-        length = MP3(path).info.length
-        picture = audiofile[stagger.id3.APIC][0].data
-    except Exception as e:
-        pass
+    audiofile = mutagen.File(path)
+    if audiofile and 'TIT2' in audiofile: title  = audiofile.tags['TIT2'].text[0]
+    if audiofile and 'TPE1' in audiofile: artist = audiofile.tags['TPE1'].text[0]
+    if audiofile and 'TALB' in audiofile: album  = audiofile.tags['TALB'].text[0]
+    length = MP3(path).info.length
+    if audiofile and 'APIC:' in audiofile: picture = audiofile.tags['APIC:'].data
 
     if title == '':
         title = None
