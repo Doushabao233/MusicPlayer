@@ -113,6 +113,7 @@ debug_font = pygame.font.SysFont('Cascadia Code', 25)
 bold_font = pygame.font.Font('./Resources/fonts/Bold.OTF', 30)
 # True if open debug screen (F3)
 toggle_debug_screen = False
+debug_screen_text = debug_font.render('', antialias=True, color='white')
 clock = pygame.time.Clock()
 # False if click close button
 running = True
@@ -224,8 +225,7 @@ def process_music():
 
 def draw_window():
     '''Draw the screen.'''
-    global background, blurred_background, info_background, background_blur_radius, note, music_title_text, music_artist_text
-    debug_screen_text = debug_font.render('', antialias=True, color='white')
+    global background, blurred_background, info_background, background_blur_radius, note, music_title_text, music_artist_text, debug_screen_text
     if toggle_debug_screen:
         debug_screen_text = debug_font.render(
 '''Music Player by Doushabao_233
@@ -277,7 +277,7 @@ total progessbar width: {total_prog_bar_width}'''.format(
         screen.blit(music_title_text, (WIDTH / 25, HEIGHT / 2 + 100))
         screen.blit(music_artist_text, (WIDTH / 25, HEIGHT / 2 + 100 + 40))
         screen.blit(progress_bar_surface, (0, 0)) # just put at 0, 0
-    screen.blit(debug_screen_text, (10, 10))
+    if toggle_debug_screen: screen.blit(debug_screen_text, (10, 10))
     pygame.display.flip() # refresh screen
 
 thread_it(animations)
