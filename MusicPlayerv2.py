@@ -5,22 +5,25 @@ import os
 import sys
 import time
 import stagger
+from mutagen.mp3 import MP3
 sys.stdout = open('nul', 'w')
 import pygame
 import pygame.gfxdraw
 sys.stdout.close()
 sys.stdout = sys.__stdout__
 from PIL import Image
+from math import floor
 import io
 
 def parse_file(path):
     '''This function parses the ID3 information from the song, encompassing details such as the title, artist, album, and image.
-    It returns a tuple in the following format: ('mp3 file name', 'music title', 'artist', 'album', [binary image data]).
+    It returns a tuple in the following format: ('mp3 file name', 'music title', 'artist', 'album', track length(float), [binary image data]).
     NOTE: If there isn't information in the file, it returns None instead of string.'''
     audiofile = None
     title = None
     artist = None
     album = None
+    length = 0.6
     picture = None
 
     try:
@@ -28,8 +31,9 @@ def parse_file(path):
         title = audiofile.title
         artist = audiofile.artist
         album = audiofile.album
+        length = MP3(path).info.length
         picture = audiofile[stagger.id3.APIC][0].data
-    except:
+    except Exception as e:
         pass
 
     if title == '':
@@ -39,7 +43,7 @@ def parse_file(path):
     if album == '':
         album = None
 
-    return os.path.basename(path), title, artist, album, picture
+    return os.path.basename(path), title, artist, album, length, picture
 
 def get_background():
     '''This function returns a path randomly. Like: ./Resources/backgrounds/snow/day.png'''
@@ -79,6 +83,9 @@ pygame.mixer.init() # init pygame mixer
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE) # set screen
 pygame.display.set_caption('Music Player') # window title
 music_busy = False # True if there's music playing
+music_pos: float = 0.0 # position of music (seconds)
+music_length: float = 0.0 # total length of music (seconds)
+music_metadata = {} # metadata of music
 background_path = get_background() # path of background
 background = pygame.image.load(background_path) # random background
 background = pygame.transform.smoothscale(background, (WIDTH, HEIGHT))
@@ -93,11 +100,11 @@ info_background.set_alpha(0)
 # Music cover - step 1. temporarily load the image
 temp_album_cover = pygame.image.load('./Resources/icons/unknown_album.png').convert_alpha()
 temp_album_cover.set_alpha(0)
-# Music Cover - step 2. ... then create a pygame.Surface ... (not finished)
+# Music Cover - step 2. ... then create a pygame.Surface ...
 album_cover = pygame.Surface(temp_album_cover.get_size(), flags=pygame.SRCALPHA) #
 album_cover = pygame.transform.smoothscale(album_cover, (WIDTH / 3.4, WIDTH / 3.4))
 # the information of mp3 file
-id3: tuple   # assignment later
+id3 = ()   # assignment later
 music_title_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
 music_title_text.set_alpha(0)
 music_artist_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
@@ -108,6 +115,7 @@ progress_bar_surface.set_alpha(100)
 progress_bar_surface.set_colorkey((0, 0, 0))
 # width of progress bar, make it resizeable
 total_progress_bar_width = 0
+music_progress_width = 0
 # save fonts
 debug_font = pygame.font.SysFont('Cascadia Code', 25)
 bold_font = pygame.font.Font('./Resources/fonts/Bold.OTF', 30)
@@ -189,15 +197,17 @@ def animations():
                 # progress_bar_surface.set_alpha(progress_bar_surface.get_alpha() - 30)
 
 def process_music():
-    global music_busy, id3, music_title_text, music_title, music_artist, music_artist_text, album_name
+    global music_busy, music_pos, music_metadata, id3, music_title_text, music_title, music_artist, music_artist_text, album_name
     while running:
         music_busy = pygame.mixer.music.get_busy()
         if music_busy:
+            music_pos = pygame.mixer.music.get_pos() / 1000 # millseconds -> seconds, 1000ms=1s
+            music_metadata = pygame.mixer.music.get_metadata()
             # MUSIC ALBUM PICTURE ---------------------------------------------------------------
-            if (id3[4] is None):
+            if (id3[5] is None):
                 img = Image.open('./Resources/icons/unknown_album.png')
             else:
-                img = Image.open(io.BytesIO(id3[4]))
+                img = Image.open(io.BytesIO(id3[5]))
             for i in ['RGB', 'RGBA', 'RGBX', 'ARGB', 'BGRA', 'P']: # this list include priority (try RGB, RGBA first)
                 try:
                     temp_album_cover = pygame.image.frombytes(img.tobytes(), img.size, i).convert_alpha()
@@ -225,7 +235,7 @@ def process_music():
 
 def draw_window():
     '''Draw the screen.'''
-    global background, blurred_background, info_background, background_blur_radius, note, music_title_text, music_artist_text, debug_screen_text
+    global background, blurred_background, info_background, background_blur_radius, note, music_title_text, music_artist_text, debug_screen_text, draw_window_perf
     if toggle_debug_screen:
         debug_screen_text = debug_font.render(
 '''Music Player by Doushabao_233
@@ -240,9 +250,11 @@ note y: {note_y}
 screen: {screen_width}x{screen_height}
 info background alpha: {info_bg_alpha}
 background blur variable: {bg_blur_var}
-total progessbar width: {total_prog_bar_width}'''.format(
+total progessbar width: {total_prog_bar_width}
+music pos: {music_pos}/{music_length}, {playing_ratio}%
+music metadata: {music_meta}'''.format(
                 fps=round(clock.get_fps()),
-                draw_perf_sec=str(draw_window_perf)[:6],
+                draw_perf_sec=floor(draw_window_perf * 100000) / 100000,
                 draw_perf='█' * int(round(draw_window_perf, 2) * 150),
                 bg_img=background_path,
                 is_playing=music_busy,
@@ -254,7 +266,9 @@ total progessbar width: {total_prog_bar_width}'''.format(
                 screen_height=HEIGHT,
                 info_bg_alpha=info_background.get_alpha(),
                 bg_blur_var=background_blur_radius,
-                total_prog_bar_width=total_progress_bar_width
+                total_prog_bar_width=total_progress_bar_width,
+                music_pos=floor(music_pos * 100) / 100, music_length=floor(id3[4] * 100) / 100, playing_ratio=floor((music_pos/id3[4]) * 100),
+                music_meta=music_metadata
                 ),
 
             antialias=True,
@@ -264,6 +278,7 @@ total progessbar width: {total_prog_bar_width}'''.format(
     if music_busy: # when start a sound
         # MUSIC PROGRESS BAR ----------------------------------------------------------------
         pygame.draw.rect(progress_bar_surface, (150, 150, 150), pygame.Rect(WIDTH / 25, HEIGHT / 2 + 100 + 40 + 60, total_progress_bar_width, 10), border_radius=10)
+        pygame.draw.rect(progress_bar_surface, (245, 245, 245), pygame.Rect(WIDTH / 25, HEIGHT / 2 + 100 + 40 + 60, ((total_progress_bar_width * (music_pos / id3[4]))), 10, border_radius=10))
         
         
 
