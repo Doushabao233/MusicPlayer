@@ -17,7 +17,7 @@ import io
 
 def parse_file(path):
     '''This function parses the ID3 information from the song, encompassing details such as the title, artist, album, and image.
-    It returns a tuple in the following format: ('mp3 file name', 'music title', 'artist', 'album', track length(float), [binary image data]).
+    It returns a tuple in the following format: ('mp3 file name', 'music title', 'artist', 'album', music length(float), [binary image data]).
     NOTE: If there isn't information in the file, it returns None instead of string.'''
     audiofile = None
     title = None
@@ -30,7 +30,10 @@ def parse_file(path):
     if audiofile and 'TIT2' in audiofile: title  = audiofile.tags['TIT2'].text[0]
     if audiofile and 'TPE1' in audiofile: artist = audiofile.tags['TPE1'].text[0]
     if audiofile and 'TALB' in audiofile: album  = audiofile.tags['TALB'].text[0]
-    length = MP3(path).info.length
+    try:
+        length = MP3(path).info.length # will raise error when music length is 0
+    except: # im too lazy to explain the error type :\
+        pass # length defaults to 0.6
     if audiofile and 'APIC:' in audiofile: picture = audiofile.tags['APIC:'].data
 
     if title == '':
@@ -106,6 +109,10 @@ music_title_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', ant
 music_title_text.set_alpha(0)
 music_artist_text = pygame.font.Font('./Resources/fonts/Bold.OTF').render('', antialias=True, color=(255, 255, 255))
 music_artist_text.set_alpha(0)
+music_pos_text = pygame.font.Font('./Resources/fonts/Medium.OTF').render('', antialias=True, color=(150, 150, 150))
+music_pos_text.set_alpha(100)
+reversed_music_pos_text = pygame.font.Font('./Resources/fonts/Medium.OTF').render('', antialias=True, color=(150, 150, 150))
+reversed_music_pos_text.set_alpha(100)
 # music progress bar will draw on a surface instead of screen
 progress_bar_surface = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
 progress_bar_surface.set_alpha(100)
@@ -116,11 +123,13 @@ music_progress_width = 0
 # save fonts
 debug_font = pygame.font.SysFont('Cascadia Code', 25)
 bold_font = pygame.font.Font('./Resources/fonts/Bold.OTF', 30)
+medium_font = pygame.font.Font('./Resources/fonts/Medium.OTF', 30)
+small_font = pygame.font.Font('./Resources/fonts/Medium.OTF', 20)
 # True if open debug screen (F3)
 toggle_debug_screen = False
 debug_screen_text = debug_font.render('', antialias=True, color='white')
 clock = pygame.time.Clock()
-# False if click close button
+# False if click the close button
 running = True
 dt = 0
 # for animation
@@ -164,10 +173,16 @@ def animations():
                 album_cover.set_alpha(album_cover.get_alpha() + 30)
 
             if music_title_text.get_alpha() < 255: # fade animation
-                music_title_text.set_alpha(music_title_text.get_alpha() + 1)
+                music_title_text.set_alpha(music_title_text.get_alpha() + 10)
             
             if music_artist_text.get_alpha() < 255: # fade animation
-                music_artist_text.set_alpha(music_artist_text.get_alpha() + 1)
+                music_artist_text.set_alpha(music_artist_text.get_alpha() + 10)
+
+            if music_pos_text.get_alpha() < 255:
+                music_pos_text.set_alpha(music_pos_text.get_alpha() + 10)
+
+            if reversed_music_pos_text.get_alpha() < 255:
+                reversed_music_pos_text.set_alpha(reversed_music_pos_text.get_alpha() + 10)
             
             if total_progress_bar_width < album_cover.get_width(): # animation
                 total_progress_bar_width += (album_cover.get_width() - total_progress_bar_width) / 5
@@ -193,8 +208,14 @@ def animations():
             # if progress_bar_surface.get_alpha() > 0:
                 # progress_bar_surface.set_alpha(progress_bar_surface.get_alpha() - 30)
 
+            if music_pos_text.get_alpha() > 0:
+                music_pos_text.set_alpha(music_pos_text.get_alpha() - 30)
+
+            if reversed_music_pos_text.get_alpha() > 0:
+                reversed_music_pos_text.set_alpha(reversed_music_pos_text.get_alpha() - 30)
+
 def process_music():
-    global music_busy, music_pos, music_metadata, id3, music_title_text, music_title, music_artist, music_artist_text, album_name
+    global music_busy, music_pos, music_metadata, id3, music_title_text, music_title, music_artist, music_artist_text, album_name, music_pos_text, reversed_music_pos_text
     while running:
         music_busy = pygame.mixer.music.get_busy()
         if music_busy:
@@ -227,6 +248,11 @@ def process_music():
             music_artist_text = bold_font.render(music_artist, antialias=True, color=(255, 255, 255))
             music_artist_text.set_alpha(200) # must be
             album_name = id3[3]
+            music_pos_text = small_font.render('{:0=2d}:{:0=2d}'.format(int(music_pos // 60), int(music_pos % 60)),
+                                                 antialias=True, color=(150, 150, 150))
+            reversed_music_pos_text = small_font.render('{:0=2d}:{:0=2d}'.format(int((id3[4] - music_pos) // 60), int((id3[4] - music_pos) % 60)),
+                                                 antialias=True, color=(150, 150, 150))
+
             
 
 
@@ -288,6 +314,8 @@ music metadata: {music_meta}'''.format(
     if music_busy:
         screen.blit(music_title_text, (WIDTH / 25, HEIGHT / 2 + 100))
         screen.blit(music_artist_text, (WIDTH / 25, HEIGHT / 2 + 100 + 40))
+        screen.blit(music_pos_text, (WIDTH / 25, HEIGHT / 2 + 100 + 40 + 60 + 10 + 5))
+        screen.blit(reversed_music_pos_text, (WIDTH / 25 + total_progress_bar_width - reversed_music_pos_text.get_width(), HEIGHT / 2 + 100 + 40 + 60 + 10 + 5))
         screen.blit(progress_bar_surface, (0, 0)) # just put at 0, 0
     if toggle_debug_screen: screen.blit(debug_screen_text, (10, 10))
     pygame.display.flip() # refresh screen
