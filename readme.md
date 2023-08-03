@@ -1,47 +1,31 @@
 ### English | [简体中文](/readme-zh_cn.md)
 
-![](https://socialify.git.ci/Doushabao233/MusicPlayer/image?description=1&descriptionEditable=I%20want%20to%20write%20a%20music%20player.&font=Inter&language=1&name=1&owner=1&pattern=Diagonal%20Stripes&theme=Auto)
+![MusicPlayer](https://socialify.git.ci/Doushabao233/MusicPlayer/image?description=1&forks=1&issues=1&language=1&name=1&owner=1&pattern=Diagonal%20Stripes&pulls=1&stargazers=1&theme=Light)
 
-# Just a music player
+# Screenshots
 
-It's a music player based on pygame-ce. You can't run it on pygame because pygame doesn't have `box_blur()` function. -- Do `pip install pygame-ce`, and use pygame community edition now!
+![image.png](https://s2.loli.net/2023/08/03/rREXwvT28zc6WHG.png)
 
-Known issue: The program can only run properly at a resolution of 1600x900, otherwise scaling issues may occur.
+---
 
-# Why make this?
+This is a music player based on pygame-ce. You can't run it with pygame because the `box_blur()` blur function is not available in pygame. To use it, enter `pip install pygame-ce` in the command line and start using the pygame community edition!
 
-For someone who simply wants to listen to music, a music player should have a pure and straightforward functionality - playing songs. It should not include features such as live streaming, social interactions, or DJ capabilities. The user interface should have a single interaction, which is to start playing music by adding music files. Subsequently, the user should only see lyrics, album cover, progress bar, and playback controls, without distractions such as comments, karaoke, or playlists.
+**Known issue: The program can only run at 1600x900 resolution, otherwise there will be scaling issues.** (To be addressed in the future)
 
-The lyrics should be displayed similar to Apple Music, where they are initially blurred and become visible when the mouse is hovered over them. The scrolling of the lyrics should be smooth, with each line seamlessly transitioning to the next, creating a fluid and unobtrusive visual experience.
+# Features
 
-The album cover should be a simple image or a circular disc-like design. If it is a circular disc, it could have the ability to rotate, adding a visually engaging element to the music player interface.
-
-The progress bar could be incorporated within the disc itself or exist as a separate element. It could be designed in a way that seamlessly integrates with the overall aesthetic of the music player, providing a clear and intuitive representation of the playback progress.
-
-......
-
-Although I have wild ideas in my mind, I can't seem to execute them...
-
-On July 11th, I tinkered with the PyQT Designer, but I couldn't figure it out. Indeed! I couldn't even implement the functionality to load lyrics, let alone UI design. Moreover, at this moment, I'm frustrated because I can't play songs in the background.
-
-On July 12th, I deleted the previously designed UI and decided to start with something simple. "A journey of a thousand miles begins with a single step." I should first focus on implementing background music playback and lyrics extraction/display features. After an hour of debugging, I managed to accomplish the display of lyrics and background music playback. In that fleeting moment of its smooth operation, I felt satisfied, yet it didn't fully meet my desired outcome. However, I'm still puzzled about the next steps... What should I use to achieve it? Tkinter, PyQT, Pygame, or HTML+CSS? Regardless of which path I choose, I have to pay the price for my initial imaginative ideas. To fulfill those aspirations, I might have to implement AAML lyric parsing, Gaussian blur effects, audio background playback, support for various formats like MP3/WAV/OGG, automatic search for artist lyrics information... As for Gaussian blur effects, I believe it would be difficult or even impossible to achieve using Tkinter or PyQT. In terms of difficulty, I am more inclined to choose Pygame, which I have a certain foundation in. Additionally, based on my knowledge, Pygame can fulfill some of the rendering requirements.
-
-On July 13th, the basic roadmap using Pygame for development has been finalized. MusicPlayer v2 development begins, at least with a GUI interface. Particle effects have been added during music playback.
-
-For more updates, please refer to the commit history.
-
-# Release
-
-Since the program is not yet complete, I am not considering how to package the pygame program as an executable (exe) at the moment. Therefore, there is no release for this project temporarily. If you want to experience it, you can clone the repository, install Python and the required libraries, and run it yourself.
+- **Drag and drop files** to start playing music (obviously)
+- Random background image on startup (this isn't a wallpaper viewer!)
+- Display cover art and artist information
+- That's it, just these
 
 # Plans
 
-- [X] Particle effects during music playback.
-- [ ] Better UI interfaces.
-- [ ] Window free-scaling.
-- [ ] Lyrics display.
-- [ ] Gaussian blur for lyrics.
-- [ ] Window resizing (not a high priority at the moment).
-- [ ] Automatic scraping of lyrics, album covers, and other information (not a high priority at the moment).
+ - [X] Musical note effects while playing
+ - [ ] Improved UI interface
+ - [ ] Lyrics display
+ - [ ] Gaussian blur for lyrics
+ - [ ] Window resizing capability [not a high priority for now]
+ - [ ] Automatic retrieval of lyrics, cover art, and other information [also not a high priority for now]
 
 ###### Translated by ChatGPT.
