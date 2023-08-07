@@ -14,7 +14,10 @@ sys.stdout = sys.__stdout__
 from PIL import Image
 from math import floor
 import io
-
+import librosa
+import easygui
+# 弹出文件选择窗口
+# select_audio = easygui.fileopenbox(title="Select an audio file", filetypes=["*.mp3", "*.wav", "*.ogg"])
 def parse_file(path):
     '''This function parses the ID3 information from the song, encompassing details such as the title, artist, album, and image.
     It returns a tuple in the following format: ('mp3 file name', 'music title', 'artist', 'album', music length(float), [binary image data]).
@@ -368,4 +371,5 @@ while running:
     draw_window_perf = time.perf_counter() - perf_start
     clock.tick(60)
 
+pygame.display.flip()
 pygame.quit()
